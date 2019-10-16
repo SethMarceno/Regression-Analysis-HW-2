@@ -1,0 +1,202 @@
+---
+title: "Homework 2"
+author: 'Seth Marceno'
+date: 'April 18, 2019'
+output: pdf_document
+---
+
+```{r include=FALSE}
+load("workspace.RData")
+```
+
+
+#Question 1
+
+##Part (a) 
+The predictor is GDP per person and the response is Fertility.
+##Part (b) 
+Looking at the scatterplot made below, the trend of GDP per person vs Fertility looks like it is NOT linear.
+```{r warning=FALSE}
+#Reading in the dataset UN11 into my Global Envirnment
+data(UN11)
+#Assigning values to my predictor and response variables, respectively
+fertility <- UN11$fertility 
+ppgdp <- UN11$ppgdp
+#Creating and titling my scatterplot
+plot( ppgdp, fertility, ylab = 'Fertility (Birth rate per 1000 females)', 
+      xlab = 'GDP Per Person')
+title('GDP Per Person vs. Fertility')
+```
+
+##Part (c) 
+Taking the natural log of both variables gives us a scatterplot where a simple linear regression model seems plausible.
+```{r warning=FALSE}
+plot(log(ppgdp), log(fertility), ylab = 'Log of Fertility (Birth rate per 1000 females)', 
+     xlab = 'Log of GDP Per Person')
+title('GDP Per Person vs. Fertility')
+```
+
+#Question 2
+
+##Part (a) 
+Based off our resutls of the scatter plot below, a simple linear regression model seems reasonable.
+```{r warning=FALSE}
+#Reads in the dataset prostate into my global environment
+data(prostate)
+#Assigning values to my predictor and response variables, respectively
+lpsa <- prostate$lpsa
+lcavol <- prostate$lcavol
+#Creates and titles my scatterplot
+plot(lcavol, lpsa, xlab = 'log cancer volume', ylab = 'log prostate specific antigen')
+title('Log Cancer Volume vs. Log Prostate Specific Antigen')
+```
+
+##Part (b) 
+Here I compute the values of Xbar, Ybar, Sxx, Syy, Sxy, B0hat, and B1hat without using the built in R function lm(). Then I draw the fitted line on my plot from part (a)
+```{r}
+Xbar <- 1/length(lcavol) * sum(lcavol)
+Xbar
+```
+
+```{r}
+Ybar <- 1/length(lpsa) * sum(lpsa)
+Ybar
+```
+
+```{r}
+Sxx <- sum(lcavol^2)-length(lcavol)*Xbar^2
+Sxx
+```
+
+```{r}
+Syy <- sum(lpsa^2)-length(lpsa)*Ybar^2
+Syy
+```
+
+```{r}
+Sxy <- sum(lcavol*lpsa) - length(lpsa)*Xbar*Ybar
+Sxy
+```
+
+```{r}
+B1hat <- Sxy/Sxx
+B1hat
+```
+
+```{r}
+B0hat <- Ybar - B1hat*Xbar
+B0hat
+```
+
+```{r}
+plot(lcavol, lpsa, xlab = 'log cancer volume', ylab = 'log prostate specific antigen')
+title('Log Cancer Volume vs. Log Prostate Specific Antigen')
+abline(a = B0hat, b = B1hat)
+```
+
+
+
+
+##Part (c) 
+Here I estimate Sigma Squared Hat
+```{r}
+Yhat <- B0hat + B1hat*lcavol
+SigmaHatSquared <- 1/(length(lpsa)-2) * sum((lpsa - Yhat)^2)
+SigmaHatSquared
+```
+
+Standard Error of B0hat
+```{r}
+SE_B0hat  <- sqrt(SigmaHatSquared) * sqrt((1/length(lpsa)) + (Xbar^2/Sxx))
+SE_B0hat
+```
+
+Standard Error of B1hat
+```{r}
+
+SE_B1hat <- sqrt(SigmaHatSquared)/sqrt(Sxx)
+SE_B1hat
+```
+
+Finding covariance of B1hat and B0hat
+```{r}
+covB1hat_B0hat <- (-Xbar*SigmaHatSquared)/Sxx
+covB1hat_B0hat
+```
+
+
+T-test for B0hat: H_0: B0 = 0 vs. H_1: B0 != 0 with alpha = 0.05
+```{r}
+test_stat_B0 <- B0hat/SE_B0hat
+crit_val_B0 <- qt(p = .975, df = length(lpsa)-2)
+P_value_B0 <- 2*pt(abs(test_stat_B0), df = length(lpsa)-2, lower.tail = FALSE)
+
+P_value_B0
+test_stat_B0
+crit_val_B0
+```
+Since |test_stat_B0| > crit_val_b0 we reject our null hypothesis that B0=0. Similarly since P_value_b0 < alpha = 0.05 we also conclude that we reject the null hypothesis.
+
+
+
+T-test for B1hat: H_0: B1 = 0 vs. H_1: B1 != 0 with alpha = 0.05
+```{r}
+test_stat_B1 <- B1hat/SE_B1hat
+crit_val_B1 <- qt(p = .975, df = length(lpsa)-2)
+P_value_B1 <- 2*pt(abs(test_stat_B1), df = length(lpsa)-2, lower.tail = FALSE)
+
+P_value_B1
+test_stat_B1
+crit_val_B1
+```
+Since |test_stat_B1| > crit_val_b1 we reject our null hypthesis that B1=0. Similarly since P_value_b1 < alpha = 0.05 we also conlcude that we reject the null hypothesis. Thus we can say that a simple linear regression model is reasonable.
+
+
+
+
+#Question 3
+
+##Part (a)
+Reads in data, creates a linear regression model, and then plots that data.
+```{r warning = FALSE}
+data(ftcollinstemp)
+fall <- ftcollinstemp$fall
+winter <- ftcollinstemp$winter
+
+fit1 <- lm(winter~fall)
+plot(fall, winter, xlab = 'Fall Temp in F', ylab = 'Winter Temp in F')
+abline(fit1)
+title('Fall Temp in F vs Winter Temp in F')
+```
+
+
+##Part (b)
+Testing H_0 B1 = 0 vs. H_1: B1 != 0 with alpha = 0.01
+```{r}
+summary(fit1)
+
+```
+Based off of our summary function, we can see that our test statistic for B1 is .3132 and our t value is 2.049. Thus, since |.3132| !> 2.049 we fail to reject the null hypothesis. 
+
+
+##Part (c)
+We know that the percentage of the variability in winter as explained by fall is equal to R squared. Based off our summary from above we see that R squared is equal to 0.0371. Therefore we can conclude that 3.71% of the variablilty in winter is explained by fall. 
+
+
+
+
+
+
+```{r, include = FALSE}
+save.image("workspace.RData")
+```
+
+
+
+
+
+
+
+
+
+
